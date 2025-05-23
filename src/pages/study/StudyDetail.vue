@@ -13,17 +13,21 @@
         <div class="left-section">
           <!-- 썸네일 영역 -->
           <div class="thumbnail-section">
-            <img 
-              :src="study.thumbnail || logoImage" 
-              :alt="study.title" 
-              class="study-thumbnail" 
-              loading="lazy" 
-              decoding="async" 
-              fetchpriority="high"
-              width="800"
-              height="480"
-              sizes="(max-width: 768px) 100vw, 50vw"
-            >
+            <template v-if="isEditing">
+              <div class="thumbnail-wrapper" style="position: relative; width: 100%; height: 100%;">
+                <template v-if="editedStudy.thumbnail && !thumbnailDeleted">
+                  <img :src="editedStudy.thumbnail" alt="썸네일 미리보기" class="study-thumbnail">
+                  <button v-if="editedStudy.thumbnail" class="delete-thumbnail" @click.stop="deleteThumbnail" style="position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 50%; background-color: #eee5dd; border: 1px solid #e3d8ce; color: #6f4e37; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1; font-size: 1.2rem; font-weight: 700; line-height: 1; padding: 0;">×</button>
+                </template>
+                <template v-else>
+                  <div class="thumbnail-upload-empty" @click="triggerFileInput" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #8b6b4a; font-size: 1rem; background: #faf7f5; border-radius: 8px; cursor: pointer; border: 1.5px dashed #e3d8ce;">사진 등록</div>
+                </template>
+                <input type="file" ref="fileInput" @change="handleThumbnailChange" accept="image/*" style="display: none">
+              </div>
+            </template>
+            <template v-else>
+              <img :src="study.thumbnail || logoImage" :alt="study.title" class="study-thumbnail" loading="lazy" decoding="async" fetchpriority="high" width="800" height="480" sizes="(max-width: 768px) 100vw, 50vw">
+            </template>
           </div>
           <!-- 참여자 목록 -->
           <div class="participants-section">
@@ -33,8 +37,11 @@
             </div>
             <ul class="participants-list">
               <li v-for="participant in study.participants" :key="participant.id" class="participant-item">
-                <span class="participant-name">{{ participant.name }}</span>
-                <span class="participant-role" v-if="participant.isAuthor">👑</span>
+                <div class="name-role">
+                  <span class="participant-name">{{ participant.name }}</span>
+                  <span class="participant-role" v-if="participant.isAuthor">👑</span>
+                </div>
+                <button v-if="isAuthor && !participant.isAuthor && isEditing" class="kick-btn" @click="kickParticipant(participant)">추방</button>
               </li>
             </ul>
           </div>
@@ -44,17 +51,48 @@
         <div class="right-section">
           <div class="form-group title-category-group">
             <div class="content-title">
-              {{ study.title }}
+              <template v-if="!isEditing">
+                {{ study.title }}
+              </template>
+              <input
+                v-else
+                v-model="editedStudy.title"
+                type="text"
+                class="title-input"
+                placeholder="스터디 제목을 입력하세요"
+              >
             </div>
             <div class="category-members-group">
               <div class="content-category">
-                {{ selectedCategory?.name }}
+                <template v-if="!isEditing">
+                  {{ selectedCategory?.name }}
+                </template>
+                <select
+                  v-else
+                  v-model="editedStudy.category_id"
+                  class="form-select"
+                >
+                  <option value="" disabled>카테고리 선택</option>
+                  <option v-for="category in categories" :key="category.id" :value="category.id">
+                    {{ category.name }}
+                  </option>
+                </select>
               </div>
               <div class="content-members">
                 <span class="info-label">총 인원</span>
                 <span class="info-content">
                   <i class="fas fa-users"></i>
-                  {{ study.maxMembers }}명
+                  <template v-if="!isEditing">
+                    {{ study.maxMembers }}명
+                  </template>
+                  <input
+                    v-else
+                    v-model.number="editedStudy.maxMembers"
+                    type="number"
+                    class="number-input"
+                    min="2"
+                    max="20"
+                  >
                 </span>
               </div>
             </div>
@@ -64,7 +102,23 @@
               <span class="info-label">지역</span>
               <span class="info-content">
                 <i class="fas fa-map-marker-alt"></i>
-                {{ study.location?.sido }} {{ study.location?.sigungu }} {{ study.location?.dong }}
+                <template v-if="!isEditing">
+                  {{ study.location?.sido }} {{ study.location?.sigungu }} {{ study.location?.dong }}
+                </template>
+                <div v-else class="location-dropdowns">
+                  <select v-model="editedStudy.sido" @change="handleSidoChange" class="form-select" required>
+                    <option value="">시/도 선택</option>
+                    <option v-for="sido in sidoList" :key="sido" :value="sido">{{ sido }}</option>
+                  </select>
+                  <select v-model="editedStudy.sigungu" @change="handleSigunguChange" class="form-select" :disabled="!editedStudy.sido" required>
+                    <option value="">시/군/구 선택</option>
+                    <option v-for="sigungu in sigunguList" :key="sigungu" :value="sigungu">{{ sigungu }}</option>
+                  </select>
+                  <select v-model="editedStudy.dong" class="form-select" :disabled="!editedStudy.sigungu" required>
+                    <option value="">읍/면/동 선택</option>
+                    <option v-for="dong in dongList" :key="dong" :value="dong">{{ dong }}</option>
+                  </select>
+                </div>
               </span>
             </div>
           </div>
@@ -73,19 +127,66 @@
               <span class="info-label">기간</span>
               <span class="info-content">
                 <i class="fas fa-calendar-alt"></i>
-                {{ formatDate(study.startDate) }} ~ {{ formatDate(study.endDate) }}
+                <template v-if="!isEditing">
+                  {{ formatDate(study.startDate) }} ~ {{ formatDate(study.endDate) }}
+                </template>
+                <div v-else class="date-inputs">
+                  <div class="date-picker-wrapper" @click="focusDateInput('startDate')">
+                    <input 
+                      type="date" 
+                      id="startDate" 
+                      v-model="editedStudy.startDate" 
+                      required
+                      class="date-input"
+                      :min="getTodayDate()"
+                      @change="validateDates"
+                    >
+                    <div class="date-display">
+                      {{ formatDate(editedStudy.startDate) }}
+                    </div>
+                  </div>
+                  <span class="date-separator">~</span>
+                  <div class="date-picker-wrapper" @click="focusDateInput('endDate')">
+                    <input 
+                      type="date" 
+                      id="endDate" 
+                      v-model="editedStudy.endDate" 
+                      required
+                      class="date-input"
+                      :min="editedStudy.startDate || getTodayDate()"
+                      @change="validateDates"
+                    >
+                    <div class="date-display">
+                      {{ formatDate(editedStudy.endDate) }}
+                    </div>
+                  </div>
+                </div>
               </span>
             </div>
           </div>
           <div class="form-group">
             <div class="content-text">
-              {{ study.content }}
+              <template v-if="!isEditing">
+                {{ study.content }}
+              </template>
+              <textarea
+                v-else
+                v-model="editedStudy.content"
+                class="form-textarea"
+                placeholder="스터디에 대한 설명을 입력하세요"
+              ></textarea>
             </div>
           </div>
           <div class="form-actions">
             <template v-if="isAuthor">
-              <button type="button" class="edit-btn" @click="startEditing">수정하기</button>
-              <button type="button" class="delete-btn" @click="handleDeleteStudy">삭제하기</button>
+              <template v-if="!isEditing">
+                <button type="button" class="edit-btn" @click="startEditing">수정하기</button>
+                <button type="button" class="delete-btn" @click="handleDeleteStudy">삭제하기</button>
+              </template>
+              <template v-else>
+                <button type="button" class="cancel-btn" @click="cancelEditing">취소</button>
+                <button type="button" class="submit-btn" @click="handleUpdateStudy">저장하기</button>
+              </template>
             </template>
             <template v-else>
               <button 
@@ -144,13 +245,22 @@ const dongList = ref([])
 const isEditing = ref(false)
 const editedStudy = ref({
   title: '',
+  category_id: '',
   maxMembers: 0,
   startDate: '',
   endDate: '',
-  content: ''
+  content: '',
+  sido: '',
+  sigungu: '',
+  dong: ''
 })
 const appliedStudies = ref([])
 const createdStudies = ref([])
+const sidoList = ref([])
+const originalThumbnail = ref('')
+const thumbnailDeleted = ref(false)
+const fileInput = ref(null)
+const originalParticipants = ref([])
 
 // 날짜 포맷팅 함수
 const formatDate = (dateString) => {
@@ -346,21 +456,42 @@ const goToLogin = () => {
 
 // 수정 시작
 const startEditing = () => {
-  // 현재 스터디 정보를 수정용 데이터에 복사
   editedStudy.value = {
     title: study.value.title,
+    category_id: study.value.category_id,
     maxMembers: study.value.maxMembers,
     startDate: study.value.startDate,
     endDate: study.value.endDate,
-    content: study.value.content
+    content: study.value.content,
+    sido: study.value.location?.sido || '',
+    sigungu: study.value.location?.sigungu || '',
+    dong: study.value.location?.dong || '',
+    thumbnail: study.value.thumbnail
   }
-  // 지역 선택 초기화
-  selectedSido.value = study.value.location.sido
-  handleSidoChange()
-  selectedSigungu.value = study.value.location.sigungu
-  handleSigunguChange()
-  selectedDong.value = study.value.location.dong
+  originalThumbnail.value = study.value.thumbnail
+  thumbnailDeleted.value = false
+  originalParticipants.value = JSON.parse(JSON.stringify(study.value.participants))
+  sidoList.value = Object.keys(locationData)
   isEditing.value = true
+}
+
+// 수정 취소
+const cancelEditing = () => {
+  isEditing.value = false
+  editedStudy.value = {
+    title: study.value.title,
+    category_id: study.value.category_id,
+    maxMembers: study.value.maxMembers,
+    startDate: study.value.startDate,
+    endDate: study.value.endDate,
+    content: study.value.content,
+    sido: study.value.location?.sido || '',
+    sigungu: study.value.location?.sigungu || '',
+    dong: study.value.location?.dong || '',
+    thumbnail: originalThumbnail.value
+  }
+  thumbnailDeleted.value = false
+  study.value.participants = JSON.parse(JSON.stringify(originalParticipants.value))
 }
 
 // 스터디 삭제 처리
@@ -380,6 +511,59 @@ const handleDeleteStudy = async () => {
   }
 }
 
+// 스터디 정보 업데이트
+const handleUpdateStudy = async () => {
+  try {
+    // TODO: 실제 API 호출로 대체
+    study.value.title = editedStudy.value.title
+    study.value.category_id = editedStudy.value.category_id
+    study.value.maxMembers = editedStudy.value.maxMembers
+    study.value.startDate = editedStudy.value.startDate
+    study.value.endDate = editedStudy.value.endDate
+    study.value.content = editedStudy.value.content
+    study.value.location = {
+      sido: editedStudy.value.sido,
+      sigungu: editedStudy.value.sigungu,
+      dong: editedStudy.value.dong
+    }
+    isEditing.value = false
+    alert('스터디 정보가 수정되었습니다.')
+  } catch (error) {
+    console.error('스터디 수정 실패:', error)
+    alert('스터디 수정에 실패했습니다.')
+  }
+}
+
+// 날짜 입력 필드 포커스 함수 추가
+const focusDateInput = (inputId) => {
+  const input = document.getElementById(inputId)
+  if (input) {
+    input.showPicker()
+  }
+}
+
+// 날짜 유효성 검사
+const validateDates = () => {
+  if (editedStudy.value.startDate && editedStudy.value.endDate) {
+    const startDate = new Date(editedStudy.value.startDate)
+    const endDate = new Date(editedStudy.value.endDate)
+    
+    if (endDate < startDate) {
+      alert('종료일은 시작일보다 이후여야 합니다.')
+      editedStudy.value.endDate = editedStudy.value.startDate
+    }
+  }
+}
+
+// 오늘 날짜를 YYYY-MM-DD 형식으로 반환하는 함수
+const getTodayDate = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 // Add preload link for logo image
 onMounted(() => {
   const link = document.createElement('link')
@@ -390,6 +574,7 @@ onMounted(() => {
 })
 
 onMounted(() => {
+  sidoList.value = Object.keys(locationData)
   fetchCategories()
   checkLoginStatus()
   fetchStudyDetail()
@@ -419,6 +604,35 @@ onMounted(() => {
     }
   ]
 })
+
+const handleThumbnailChange = (e) => {
+  const file = e.target.files[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      editedStudy.value.thumbnail = event.target.result
+      thumbnailDeleted.value = false
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+const triggerFileInput = () => {
+  if (fileInput.value) fileInput.value.click()
+}
+
+const deleteThumbnail = () => {
+  editedStudy.value.thumbnail = ''
+  thumbnailDeleted.value = true
+}
+
+const kickParticipant = (participant) => {
+  if (confirm(`${participant.name}님을 추방하시겠습니까?`)) {
+    // TODO: 실제 추방 API 연동
+    study.value.participants = study.value.participants.filter(p => p.id !== participant.id)
+    alert(`${participant.name}님이 추방되었습니다.`)
+  }
+}
 </script>
 
 <style scoped>
@@ -698,11 +912,21 @@ onMounted(() => {
 }
 
 .participant-item {
-  padding: 0.5rem 0;
-  color: #4b3621;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
+  transition: background 0.2s;
+}
+
+.participant-item:hover {
+  background: #f5f2ef;
+}
+
+.name-role {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .participant-role {
@@ -719,9 +943,15 @@ onMounted(() => {
 }
 
 .form-group {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.25rem;
   flex-shrink: 0;
   overflow: hidden;
+}
+
+.form-group:has(.form-textarea) {
+  border: none;
+  padding: 0;
+  background-color: transparent;
 }
 
 .form-group label {
@@ -757,35 +987,27 @@ onMounted(() => {
 
 .form-textarea {
   width: 100%;
-  padding: 1rem;
-  border: 1px solid #e3d8ce;
+  padding: 0.75rem;
+  border: none;
   border-radius: 8px;
   font-size: 1.1rem;
   line-height: 1.6;
   color: #4b3621;
-  background-color: #fbf9f8;
+  background-color: transparent;
   transition: all 0.2s ease;
-  height: 320px;
+  height: 300px;
   resize: none;
+  overflow-y: auto;
   margin-bottom: 0.25rem;
 }
 
-.form-textarea::-webkit-scrollbar {
-  width: 8px;
+.form-textarea:hover {
+  background-color: #fdfbf9;
 }
 
-.form-textarea::-webkit-scrollbar-track {
-  background: #f5f2ef;
-  border-radius: 4px;
-}
-
-.form-textarea::-webkit-scrollbar-thumb {
-  background: #c4b5a5;
-  border-radius: 4px;
-}
-
-.form-textarea::-webkit-scrollbar-thumb:hover {
-  background: #8b6b4a;
+.form-textarea:focus {
+  outline: none;
+  background-color: #fff;
 }
 
 .form-row {
@@ -852,26 +1074,31 @@ onMounted(() => {
 .location-dropdowns {
   display: flex;
   gap: 0.75rem;
-  margin-bottom: 0.5rem;
-  flex-shrink: 0;
+  margin-bottom: 0;
+  flex: 1;
+  max-width: 600px;
 }
 
 .form-select {
-  flex: 1;
-  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
-  border: 1px solid #e3d8ce;
-  border-radius: 6px;
+  width: 100%;
+  height: 100%;
+  padding: 0 0.5rem;
+  border: none;
+  background: transparent;
+  color: #6f4e37;
   font-size: 0.9rem;
-  color: #4b3621;
-  background-color: #fff;
-  height: 36px;
-  min-height: 36px;
+  font-weight: 600;
+  border-radius: 20px;
+  text-align: center;
+  box-sizing: border-box;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236f4e37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 1rem;
-  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-select option {
+  text-align: center;
 }
 
 .form-select:focus {
@@ -981,62 +1208,71 @@ onMounted(() => {
 .category-members-group {
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.7rem;
+  min-width: 0;
+  flex: 1 1 0;
+  justify-content: flex-end;
   margin-left: auto;
 }
 
-.category-group {
-  flex: 1;
-}
-
-.members-group {
-  flex: 1;
-}
-
-.content-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #4b3621;
-  flex: 1;
-  max-width: 100%;
-  width: 100%;
-  display: block;
-  padding-bottom: 0;
-}
-
-.content-location,
-.content-date {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
+.content-category {
+  display: inline-block;
+  padding: 0.5rem 0.7rem;
+  background-color: #eee5dd;
   color: #6f4e37;
-  margin-top: 0.5rem;
-  margin-bottom: 0;
-  text-align: center;
-  padding: 0.5rem 0;
-}
-
-.info-label {
-  min-width: 60px;
+  border-radius: 20px;
+  font-size: 0.87rem;
   font-weight: 600;
-  color: #8b6b4a;
+  white-space: nowrap;
+  text-align: center;
+  min-width: 120px;
+  height: 36px;
+  box-sizing: border-box;
 }
 
-.info-content {
+.content-members {
   display: flex;
   align-items: center;
-  gap: 0.1rem;
-  flex: 1;
+  justify-content: flex-start;
+  min-width: 120px;
+  font-size: 0.87rem;
+  color: #6f4e37;
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  background-color: #f5f2ef;
+  border-radius: 20px;
+  border: 1px solid #eee5dd;
+  white-space: nowrap;
+  overflow: hidden;
+  box-sizing: border-box;
+  flex: none;
 }
 
-.info-content i {
-  color: #8b6b4a;
-  font-size: 1.1rem;
-  width: 20px;
+.content-members .info-label {
+  min-width: 48px;
+  margin-right: 0.5rem;
+  padding: 0;
+}
+
+.content-members .info-content {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding-left: 0;
+}
+
+.number-input {
+  width: 48px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: #4b3621;
+  background: transparent;
   text-align: center;
+  font-weight: 600;
+  box-sizing: border-box;
 }
 
 .edit-btn,
@@ -1123,16 +1359,32 @@ onMounted(() => {
   display: none !important;
 }
 
+.content-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #4b3621;
+  flex: 1;
+  max-width: 100%;
+  width: 100%;
+  display: block;
+  padding-bottom: 0;
+  line-height: 1.4;
+  min-height: 2.52rem; /* 1.8rem * 1.4 */
+}
+
 .title-input {
   font-size: 1.8rem;
   font-weight: 700;
   color: #4b3621;
-  padding: 0.5rem 0.75rem;
+  padding: 0;
   border: none;
   border-bottom: 2px solid #eee5dd;
   background-color: transparent;
   width: 100%;
   transition: all 0.2s ease;
+  line-height: 1.4;
+  height: 2.52rem; /* 1.8rem * 1.4 */
+  box-sizing: border-box;
 }
 
 .title-input:hover {
@@ -1143,86 +1395,6 @@ onMounted(() => {
 .title-input:focus {
   outline: none;
   border-color: #6f4e37;
-  background-color: #fff;
-}
-
-.form-select {
-  flex: 1;
-  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
-  border: 1px solid #e3d8ce;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  color: #4b3621;
-  background-color: #fff;
-  height: 36px;
-  min-height: 36px;
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236f4e37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 1rem;
-  line-height: 1.2;
-}
-
-.form-select:hover {
-  border-color: #c4b5a5;
-  background-color: #fdfbf9;
-}
-
-.form-select:focus {
-  outline: none;
-  border-color: #6f4e37;
-  box-shadow: 0 0 0 2px rgba(111, 78, 55, 0.1);
-}
-
-.date-input {
-  width: 100%;
-  padding: 0.4rem;
-  border: 1px solid #e3d8ce;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  color: #4b3621;
-  background-color: #fff;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  height: 36px;
-}
-
-.date-input:hover {
-  border-color: #c4b5a5;
-  background-color: #fdfbf9;
-}
-
-.date-input:focus {
-  outline: none;
-  border-color: #6f4e37;
-  box-shadow: 0 0 0 2px rgba(111, 78, 55, 0.1);
-}
-
-.form-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e3d8ce;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: #4b3621;
-  background-color: #fbf9f8;
-  transition: all 0.2s ease;
-  height: 320px;
-  resize: none;
-  margin-bottom: 0.25rem;
-}
-
-.form-textarea:hover {
-  border-color: #c4b5a5;
-  background-color: #fdfbf9;
-}
-
-.form-textarea:focus {
-  outline: none;
-  border-color: #6f4e37;
-  box-shadow: 0 0 0 2px rgba(111, 78, 55, 0.1);
   background-color: #fff;
 }
 
@@ -1238,38 +1410,6 @@ onMounted(() => {
   margin-bottom: 0.25rem;
 }
 
-.content-category {
-  display: inline-block;
-  padding: 0.5rem 0.7rem;
-  background-color: #eee5dd;
-  color: #6f4e37;
-  border-radius: 20px;
-  font-size: 0.87rem;
-  font-weight: 600;
-  white-space: nowrap;
-  text-align: center;
-  min-width: 120px;
-  height: 36px;
-  box-sizing: border-box;
-}
-
-.content-members {
-  display: flex;
-  align-items: center;
-  gap: 0.1rem;
-  font-size: 0.87rem;
-  color: #6f4e37;
-  padding: 0.5rem 0.7rem;
-  background-color: #f5f2ef;
-  border-radius: 20px;
-  border: 1px solid #eee5dd;
-  white-space: nowrap;
-  min-width: 120px;
-  height: 36px;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
 .content-text {
   font-size: 1.1rem;
   line-height: 1.6;
@@ -1283,5 +1423,193 @@ onMounted(() => {
   height: 320px;
   overflow-y: auto;
   flex-shrink: 0;
+}
+
+.content-location,
+.content-date {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 1rem;
+  color: #6f4e37;
+  margin-bottom: 0;
+  margin-top: 0;
+  padding: 0.5rem 0;
+  width: 100%;
+  max-width: 800px;
+}
+
+.info-label {
+  min-width: 60px;
+  font-weight: 600;
+  color: #8b6b4a;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.info-content {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+  padding-left: 2.25rem;
+  position: relative;
+}
+
+.info-content i {
+  color: #8b6b4a;
+  font-size: 1rem;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.location-dropdowns {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0;
+  flex: 1;
+  max-width: 600px;
+}
+
+.location-dropdowns .form-select {
+  background-color: #f5f2ef;
+  border: 1.5px solid #e3d8ce;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.location-dropdowns .form-select:focus {
+  background-color: #fffbe9;
+  border-color: #6f4e37;
+  box-shadow: 0 0 0 2px #ffe6b8;
+  outline: none;
+  z-index: 2;
+}
+
+.location-dropdowns .form-select:hover {
+  background-color: #fdf6e9;
+  border-color: #c4b5a5;
+}
+
+.date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  max-width: 600px;
+  margin: 0;
+  padding: 0;
+}
+
+.date-picker-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+.date-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 3;
+}
+
+.date-display {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0.4rem 0.75rem 0.4rem 2.25rem;
+  border: 1px solid #e3d8ce;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #4b3621;
+  background-color: #fff;
+  transition: all 0.2s ease;
+  line-height: 28px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.date-display::before {
+  content: '';
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236f4e37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.date-picker-wrapper:hover .date-display {
+  border-color: #c4b5a5;
+  background-color: #fdfbf9;
+}
+
+.date-picker-wrapper:focus-within .date-display {
+  border-color: #6f4e37;
+  box-shadow: 0 0 0 2px rgba(111, 78, 55, 0.1);
+}
+
+.date-separator {
+  color: #6f4e37;
+  font-weight: 500;
+  margin: 0 0.5rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.kick-btn {
+  display: none;
+  margin-left: auto;
+  background: #eee5dd;
+  color: #8b6b4a;
+  border: 1px solid #e3d8ce;
+  border-radius: 12px;
+  min-width: 40px;
+  height: 28px;
+  font-size: 0.85rem;
+  font-weight: 400;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  padding: 0 1rem;
+}
+
+.participants-list .participant-item:hover .kick-btn {
+  display: inline-flex;
+}
+
+.kick-btn:hover {
+  background: #e3d8ce;
+  color: #4b3621;
 }
 </style> 
