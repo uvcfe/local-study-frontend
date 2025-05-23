@@ -29,7 +29,11 @@
       <div class="study-list" @wheel.prevent="handleStudyListScroll">
         <div v-for="study in filteredStudies" :key="study.id" class="study-card" @click="goToStudyDetail(study.id)">
           <div class="study-thumbnail">
+            <div v-show="study.isImageLoading" class="study-thumbnail-skeleton">
+              <div class="skeleton-content"></div>
+            </div>
             <img 
+              v-show="!study.isImageLoading"
               :src="study.thumbnail || logoImage" 
               :alt="study.title" 
               loading="lazy" 
@@ -38,6 +42,8 @@
               width="400"
               height="300"
               sizes="(max-width: 768px) 100vw, 25vw"
+              @load="handleImageLoad(study)"
+              @error="handleImageError(study)"
             >
           </div>
           <div class="study-info">
@@ -348,7 +354,10 @@ const fetchStudies = async () => {
   try {
     console.log('Fetching studies...') // 디버깅용 로그
     // TODO: 실제 API 호출로 대체
-    studies.value = mockStudies.studies
+    studies.value = mockStudies.studies.map(study => ({
+      ...study,
+      isImageLoading: true
+    }))
     console.log('Studies fetched:', studies.value) // 디버깅용 로그
   } catch (error) {
     console.error('스터디 목록 로딩 실패:', error)
@@ -430,6 +439,16 @@ onMounted(() => {
   link.href = logoImage
   document.head.appendChild(link)
 })
+
+// 이미지 로드 핸들러
+const handleImageLoad = (study) => {
+  study.isImageLoading = false
+}
+
+// 이미지 에러 핸들러
+const handleImageError = (study) => {
+  study.isImageLoading = false
+}
 
 // 컴포넌트 메서드 노출
 defineExpose({
@@ -709,14 +728,49 @@ h3 {
 .study-thumbnail {
   width: 100%;
   height: 160px;
+  position: relative;
   overflow: hidden;
-  flex-shrink: 0;
+  border-radius: 8px 8px 0 0;
+}
+
+.study-thumbnail-skeleton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #f5f5f5;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.skeleton-content {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .study-thumbnail img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  z-index: 2;
 }
 
 .study-info {

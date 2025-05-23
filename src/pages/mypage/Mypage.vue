@@ -58,7 +58,11 @@
           <div class="study-list">
             <div v-for="study in filteredCreatedStudies" :key="study.id" class="study-card" @click="goToStudyDetail(study.id)">
               <div class="study-thumbnail">
+                <div v-show="study.isImageLoading" class="study-thumbnail-skeleton">
+                  <div class="skeleton-content"></div>
+                </div>
                 <img 
+                  v-show="!study.isImageLoading"
                   :src="study.thumbnail || logoImage" 
                   :alt="study.title" 
                   loading="lazy" 
@@ -67,6 +71,8 @@
                   width="400"
                   height="300"
                   sizes="(max-width: 768px) 100vw, 25vw"
+                  @load="handleImageLoad(study)"
+                  @error="handleImageError(study)"
                 >
               </div>
               <div class="study-info">
@@ -119,7 +125,22 @@
           <div class="study-list">
             <div v-for="study in filteredAppliedStudies" :key="study.id" class="study-card" @click="goToStudyDetail(study.id)">
               <div class="study-thumbnail">
-                <img :src="study.thumbnail || logoImage" :alt="study.title" loading="lazy" decoding="async" fetchpriority="high">
+                <div v-show="study.isImageLoading" class="study-thumbnail-skeleton">
+                  <div class="skeleton-content"></div>
+                </div>
+                <img 
+                  v-show="!study.isImageLoading"
+                  :src="study.thumbnail || logoImage" 
+                  :alt="study.title" 
+                  loading="lazy" 
+                  decoding="async" 
+                  fetchpriority="high"
+                  width="400"
+                  height="300"
+                  sizes="(max-width: 768px) 100vw, 25vw"
+                  @load="handleImageLoad(study)"
+                  @error="handleImageError(study)"
+                >
               </div>
               <div class="study-info">
                 <h3 class="study-title">{{ study.title }}</h3>
@@ -204,6 +225,9 @@ const updateProfile = () => {
 
 // 스터디 상세 페이지로 이동
 const goToStudyDetail = (studyId) => {
+  const study = [...createdStudies.value, ...appliedStudies.value].find(s => s.id === studyId)
+  if (!study) return
+
   if (activeMenu.value === 'applied') {
     router.push({
       path: `/study/${studyId}`,
@@ -215,7 +239,9 @@ const goToStudyDetail = (studyId) => {
       query: { tab: 'created' }
     })
   } else {
-    router.push(`/study/${studyId}`)
+    router.push({
+      path: `/study/${studyId}`
+    })
   }
 }
 
@@ -248,7 +274,8 @@ onMounted(() => {
       thumbnail: 'https://picsum.photos/400/300',
       currentMembers: 3,
       maxMembers: 5,
-      status: '모집중'
+      status: '모집중',
+      isImageLoading: true
     },
     {
       id: 2,
@@ -257,7 +284,8 @@ onMounted(() => {
       thumbnail: 'https://picsum.photos/400/301',
       currentMembers: 5,
       maxMembers: 5,
-      status: '모집완료'
+      status: '모집완료',
+      isImageLoading: true
     }
   ]
 
@@ -269,7 +297,8 @@ onMounted(() => {
       thumbnail: 'https://picsum.photos/400/302',
       currentMembers: 4,
       maxMembers: 6,
-      applicationStatus: '승인대기'
+      applicationStatus: '승인대기',
+      isImageLoading: true
     },
     {
       id: 4,
@@ -278,7 +307,8 @@ onMounted(() => {
       thumbnail: 'https://picsum.photos/400/303',
       currentMembers: 3,
       maxMembers: 4,
-      applicationStatus: '승인'
+      applicationStatus: '승인',
+      isImageLoading: true
     },
     {
       id: 5,
@@ -287,7 +317,8 @@ onMounted(() => {
       thumbnail: 'https://picsum.photos/400/304',
       currentMembers: 6,
       maxMembers: 6,
-      applicationStatus: '거절'
+      applicationStatus: '거절',
+      isImageLoading: true
     }
   ]
 
@@ -297,7 +328,38 @@ onMounted(() => {
   link.as = 'image'
   link.href = logoImage
   document.head.appendChild(link)
+
+  // 이미지 사전 로드
+  const preloadImages = (studies) => {
+    studies.forEach(study => {
+      if (study.thumbnail) {
+        const img = new Image()
+        img.onload = () => {
+          study.isImageLoading = false
+        }
+        img.onerror = () => {
+          study.isImageLoading = false
+          study.thumbnail = logoImage
+        }
+        img.src = study.thumbnail
+      }
+    })
+  }
+
+  preloadImages(createdStudies.value)
+  preloadImages(appliedStudies.value)
 })
+
+// 이미지 로드 핸들러
+const handleImageLoad = (study) => {
+  study.isImageLoading = false
+}
+
+// 이미지 에러 핸들러
+const handleImageError = (study) => {
+  study.isImageLoading = false
+  study.thumbnail = logoImage
+}
 </script>
 
 <style scoped>
@@ -726,14 +788,49 @@ onMounted(() => {
 .study-thumbnail {
   width: 100%;
   height: 160px;
+  position: relative;
   overflow: hidden;
   flex-shrink: 0;
+}
+
+.study-thumbnail-skeleton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #f5f5f5;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.skeleton-content {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .study-thumbnail img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  z-index: 2;
 }
 
 .study-info {

@@ -26,7 +26,25 @@
               </div>
             </template>
             <template v-else>
-              <img :src="study.thumbnail || logoImage" :alt="study.title" class="study-thumbnail" loading="lazy" decoding="async" fetchpriority="high" width="800" height="480" sizes="(max-width: 768px) 100vw, 50vw">
+              <div class="thumbnail-container">
+                <div v-show="isImageLoading" class="study-thumbnail-skeleton">
+                  <div class="skeleton-content"></div>
+                </div>
+                <img 
+                  v-show="!isImageLoading"
+                  :src="study.thumbnail || logoImage" 
+                  :alt="study.title" 
+                  class="study-thumbnail" 
+                  loading="lazy" 
+                  decoding="async" 
+                  fetchpriority="high" 
+                  width="800" 
+                  height="480" 
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  @load="handleImageLoad"
+                  @error="handleImageError"
+                >
+              </div>
             </template>
           </div>
           <!-- 참여자 목록 -->
@@ -220,7 +238,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import logoImage from '@/assets/logo.png'
 import mockStudies from '@/data/mockStudies.json'
@@ -261,6 +279,7 @@ const originalThumbnail = ref('')
 const thumbnailDeleted = ref(false)
 const fileInput = ref(null)
 const originalParticipants = ref([])
+const isImageLoading = ref(true)
 
 // 날짜 포맷팅 함수
 const formatDate = (dateString) => {
@@ -290,12 +309,34 @@ const handleSigunguChange = () => {
     : []
 }
 
+// 이미지 URL이 변경될 때마다 로딩 상태를 초기화
+watch(() => study.value?.thumbnail, () => {
+  isImageLoading.value = true
+})
+
+// 이미지 로드 핸들러
+const handleImageLoad = () => {
+  console.log('Image loaded')
+  isImageLoading.value = false
+}
+
+// 이미지 에러 핸들러
+const handleImageError = () => {
+  console.log('Image load error')
+  isImageLoading.value = false
+  // 이미지 로드 실패 시 기본 이미지로 대체
+  study.value.thumbnail = logoImage
+}
+
 // 스터디 상세 정보 가져오기
 const fetchStudyDetail = async () => {
   try {
     const studyId = parseInt(route.params.id)
     const isAppliedStudy = route.query.tab === 'applied'
     const isCreatedStudy = route.query.tab === 'created'
+    
+    // 이미지 로딩 상태 초기화
+    isImageLoading.value = true
     
     // 신청 스터디인 경우
     if (isAppliedStudy) {
@@ -319,6 +360,8 @@ const fetchStudyDetail = async () => {
         if (category) {
           selectedCategory.value = category
         }
+        // 이미지 로딩 상태 초기화
+        isImageLoading.value = !study.value.thumbnail
         return
       }
     }
@@ -343,6 +386,8 @@ const fetchStudyDetail = async () => {
         if (category) {
           selectedCategory.value = category
         }
+        // 이미지 로딩 상태 초기화
+        isImageLoading.value = !study.value.thumbnail
         return
       }
     }
@@ -372,8 +417,11 @@ const fetchStudyDetail = async () => {
     if (category) {
       selectedCategory.value = category
     }
+    // 이미지 로딩 상태 초기화
+    isImageLoading.value = !study.value.thumbnail
   } catch (error) {
     console.error('스터디 상세 정보 로딩 실패:', error)
+    isImageLoading.value = false
   }
 }
 
@@ -860,10 +908,56 @@ const kickParticipant = (participant) => {
   border-radius: 8px;
 }
 
+.thumbnail-container {
+  width: 100%;
+  height: 480px;
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.study-thumbnail-skeleton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.skeleton-content {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 .study-thumbnail {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  z-index: 2;
 }
 
 .participants-section {
