@@ -1,11 +1,20 @@
 <template>
   <div class="app-container">
     <Header 
-      v-if="!isLoginPage && !isSignupPage && !isFindPasswordPage && !isMypagePage" 
+      v-if="!isLoginPage && !isSignupPage && !isFindPasswordPage" 
       @search="handleHeaderSearch"
       @reset="handleHeaderReset"
     />
-    <router-view v-slot="{ Component }">
+    <div class="main-layout" v-if="!isLoginPage && !isSignupPage && !isFindPasswordPage">
+      <Sidebar 
+        v-model:selectedCategory="selectedCategory"
+        :isMypage="isMypagePage"
+      />
+      <router-view v-slot="{ Component }">
+        <component :is="Component" ref="currentComponent" />
+      </router-view>
+    </div>
+    <router-view v-else v-slot="{ Component }">
       <component :is="Component" ref="currentComponent" />
     </router-view>
   </div>
@@ -13,11 +22,13 @@
 
 <script setup>
 import Header from './components/Header.vue'
+import Sidebar from './components/Sidebar.vue'
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const currentComponent = ref(null)
+const selectedCategory = ref(null)
 
 const isLoginPage = computed(() => route.path === '/login')
 const isSignupPage = computed(() => route.path === '/signup')
@@ -72,5 +83,14 @@ body {
 .scrollable {
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.main-layout {
+  display: flex;
+  flex: 1;
+}
+
+.main-layout > :last-child {
+  flex: 1;
 }
 </style>

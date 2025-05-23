@@ -1,0 +1,77 @@
+{
+  "appliedStudies": [
+    {
+      "id": 3,
+      "categoryId": 1,
+      "title": "알고리즘 스터디",
+      "content": "코딩 테스트 대비 알고리즘 문제 풀이. 매일 2문제씩 풀고 함께 리뷰하는 스터디입니다. 자료구조와 알고리즘의 기초부터 심화까지 체계적으로 학습합니다.",
+      "author": "이준호",
+      "currentMembers": 4,
+      "maxMembers": 6,
+      "thumbnail": "https://picsum.photos/400/311",
+      "location": {
+        "sido": "서울특별시",
+        "sigungu": "서초구",
+        "dong": "반포동"
+      },
+      "applicationStatus": "승인대기",
+      "startDate": "2024-04-01",
+      "endDate": "2024-06-30",
+      "participants": [
+        { "id": 1, "name": "이준호", "isAuthor": true },
+        { "id": 2, "name": "김철수", "isAuthor": false },
+        { "id": 3, "name": "박지민", "isAuthor": false },
+        { "id": 4, "name": "홍길동", "isAuthor": false }
+      ]
+    },
+    {
+      "id": 4,
+      "categoryId": 5,
+      "title": "영어 회화 스터디",
+      "content": "매일 영어로 대화하며 실력 향상. 원어민 강사와 함께하는 실전 영어 회화 스터디입니다. 일상 대화부터 비즈니스 영어까지 다양한 주제로 학습합니다.",
+      "author": "최지원",
+      "currentMembers": 3,
+      "maxMembers": 4,
+      "thumbnail": "https://picsum.photos/400/309",
+      "location": {
+        "sido": "서울특별시",
+        "sigungu": "강서구",
+        "dong": "화곡동"
+      },
+      "applicationStatus": "승인",
+      "startDate": "2024-04-15",
+      "endDate": "2024-07-15",
+      "participants": [
+        { "id": 1, "name": "최지원", "isAuthor": true },
+        { "id": 2, "name": "김수진", "isAuthor": false },
+        { "id": 3, "name": "홍길동", "isAuthor": false }
+      ]
+    },
+    {
+      "id": 5,
+      "categoryId": 3,
+      "title": "마케팅 스터디",
+      "content": "디지털 마케팅 전략과 실전 사례. 최신 마케팅 트렌드와 전략을 배우고 실제 사례를 분석하는 스터디입니다. SNS 마케팅, 콘텐츠 마케팅, SEO 등 다양한 주제를 다룹니다.",
+      "author": "박현우",
+      "currentMembers": 6,
+      "maxMembers": 6,
+      "thumbnail": "https://picsum.photos/400/313",
+      "location": {
+        "sido": "서울특별시",
+        "sigungu": "마포구",
+        "dong": "상암동"
+      },
+      "applicationStatus": "거절",
+      "startDate": "2024-04-01",
+      "endDate": "2024-08-31",
+      "participants": [
+        { "id": 1, "name": "박현우", "isAuthor": true },
+        { "id": 2, "name": "김민준", "isAuthor": false },
+        { "id": 3, "name": "이영희", "isAuthor": false },
+        { "id": 4, "name": "정다은", "isAuthor": false },
+        { "id": 5, "name": "최유진", "isAuthor": false },
+        { "id": 6, "name": "박지민", "isAuthor": false }
+      ]
+    }
+  ]
+} 

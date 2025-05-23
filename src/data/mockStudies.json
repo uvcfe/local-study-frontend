@@ -1,0 +1,229 @@
+{
+  "studies": [
+    {
+      "id": 1,
+      "categoryId": 1,
+      "title": "프로그래밍 스터디",
+      "content": "함께 프로그래밍을 배우고 실력을 향상시켜요!함께 프로그래밍을 배우고 실력을 향상시켜요!함께 프로그래밍을 배우고 실력을 향상시켜요!함께 프로그래밍을 배우고 실력을 향상시켜요!함께 프로그래밍을 배우고 실력을 향상시켜요!함께 프로그래밍을 배우고 실력을 향상시켜요!",
+      "author": "홍길동",
+      "currentMembers": 3,
+      "maxMembers": 5,
+      "thumbnail": "",
+      "location": {
+        "sido": "서울특별시",
+        "sigungu": "강남구",
+        "dong": "역삼동"
+      }
+    },
+    {
+      "id": 2,
+      "categoryId": 1,
+      "title": "자격증도전반",
+      "content": "정보처리기사 자격증 취득을 위한 스터디입니다.",
+      "author": "김철수",
+      "currentMembers": 4,
+      "maxMembers": 6,
+      "thumbnail": "https://picsum.photos/400/301",
+      "location": {
+        "sido": "서울특별시",
+        "sigungu": "서초구",
+        "dong": "서초동"
+      }
+    },
+    {
+      "id": 3,
+      "categoryId": 1,
+      "title": "웹 개발 스터디",
+      "content": "프론트엔드와 백엔드 개발을 함께 배워요.",
+      "author": "이영희",
+      "currentMembers": 2,
+      "maxMembers": 4,
+      "thumbnail": "https://picsum.photos/400/302",
+      "location": {
+        "sido": "부산광역시",
+        "sigungu": "해운대구",
+        "dong": "우동"
+      }
+    },
+    {
+      "id": 4,
+      "categoryId": 2,
+      "title": "UI/UX 디자인 스터디",
+      "content": "사용자 경험을 중심으로 한 디자인 학습",
+      "author": "박지민",
+      "currentMembers": 5,
+      "maxMembers": 8,
+      "thumbnail": "https://picsum.photos/400/303",
+      "location": {
+        "sido": "서울특별시",
+        "sigungu": "마포구",
+        "dong": "홍대입구"
+      }
+    },
+    {
+      "id": 5,
+      "categoryId": 2,
+      "title": "그래픽 디자인 기초",
+      "content": "포토샵과 일러스트레이터 기초부터 실전까지",
+      "author": "최유진",
+      "currentMembers": 3,
+      "maxMembers": 5,
+      "thumbnail": "https://picsum.photos/400/304",
+      "location": {
+        "sido": "인천광역시",
+        "sigungu": "연수구",
+        "dong": "송도동"
+      }
+    },
+    {
+      "id": 6,
+      "categoryId": 3,
+      "title": "디지털 마케팅 스터디",
+      "content": "SNS 마케팅과 콘텐츠 제작 실습",
+      "author": "정다은",
+      "currentMembers": 4,
+      "maxMembers": 6,
+      "thumbnail": "https://picsum.photos/400/305",
+      "location": {
+        "sido": "서울특별시",
+        "sigungu": "강남구",
+        "dong": "삼성동"
+      }
+    },
+    {
+      "id": 7,
+      "categoryId": 3,
+      "title": "브랜드 마케팅 전략",
+      "content": "브랜드 아이덴티티 구축과 마케팅 전략 수립",
+      "author": "김민준",
+      "currentMembers": 2,
+      "maxMembers": 4,
+      "thumbnail": "https://picsum.photos/400/306",
+      "location": {
+        "sido": "부산광역시",
+        "sigungu": "남구",
+        "dong": "대연동"
+      }
+    },
+    {
+      "id": 8,
+      "categoryId": 4,
+      "title": "스타트업 창업 스터디",
+      "content": "창업 아이템 발굴부터 비즈니스 모델 설계까지",
+      "author": "이승우",
+      "currentMembers": 6,
+      "maxMembers": 8,
+      "thumbnail": "https://picsum.photos/400/307",
+      "location": {
+        "sido": "서울특별시",
+        "sigungu": "송파구",
+        "dong": "잠실동"
+      }
+    },
+    {
+      "id": 9,
+      "categoryId": 4,
+      "title": "재무관리 스터디",
+      "content": "기업 재무제표 분석과 투자 전략",
+      "author": "박서연",
+      "currentMembers": 3,
+      "maxMembers": 5,
+      "thumbnail": "https://picsum.photos/400/308",
+      "location": {
+        "sido": "인천광역시",
+        "sigungu": "남동구",
+        "dong": "구월동"
+      }
+    },
+    {
+      "id": 10,
+      "categoryId": 5,
+      "title": "영어 회화 스터디",
+      "content": "실전 영어 회화와 토론",
+      "author": "최지원",
+      "currentMembers": 4,
+      "maxMembers": 6,
+      "thumbnail": "https://picsum.photos/400/309",
+      "location": {
+        "sido": "서울특별시",
+        "sigungu": "강서구",
+        "dong": "화곡동"
+      }
+    },
+    {
+      "id": 11,
+      "categoryId": 5,
+      "title": "일본어 JLPT 준비반",
+      "content": "JLPT N2 합격을 위한 스터디",
+      "author": "김수진",
+      "currentMembers": 5,
+      "maxMembers": 7,
+      "thumbnail": "https://picsum.photos/400/310",
+      "location": {
+        "sido": "부산광역시",
+        "sigungu": "동래구",
+        "dong": "명륜동"
+      }
+    },
+    {
+      "id": 12,
+      "categoryId": 1,
+      "title": "알고리즘 스터디",
+      "content": "코딩 테스트 대비 알고리즘 문제 풀이",
+      "author": "이준호",
+      "currentMembers": 3,
+      "maxMembers": 5,
+      "thumbnail": "https://picsum.photos/400/311",
+      "location": {
+        "sido": "서울특별시",
+        "sigungu": "서초구",
+        "dong": "반포동"
+      }
+    },
+    {
+      "id": 13,
+      "categoryId": 2,
+      "title": "모션 그래픽 디자인",
+      "content": "애프터이펙트를 활용한 모션 그래픽 제작",
+      "author": "정민서",
+      "currentMembers": 2,
+      "maxMembers": 4,
+      "thumbnail": "https://picsum.photos/400/312",
+      "location": {
+        "sido": "인천광역시",
+        "sigungu": "연수구",
+        "dong": "연수동"
+      }
+    },
+    {
+      "id": 14,
+      "categoryId": 3,
+      "title": "콘텐츠 마케팅 스터디",
+      "content": "유튜브 채널 운영과 콘텐츠 제작",
+      "author": "박현우",
+      "currentMembers": 4,
+      "maxMembers": 6,
+      "thumbnail": "https://picsum.photos/400/313",
+      "location": {
+        "sido": "서울특별시",
+        "sigungu": "마포구",
+        "dong": "상암동"
+      }
+    },
+    {
+      "id": 15,
+      "categoryId": 4,
+      "title": "투자 분석 스터디",
+      "content": "주식 투자와 포트폴리오 관리",
+      "author": "김태영",
+      "currentMembers": 5,
+      "maxMembers": 7,
+      "thumbnail": "https://picsum.photos/400/314",
+      "location": {
+        "sido": "부산광역시",
+        "sigungu": "해운대구",
+        "dong": "중동"
+      }
+    }
+  ]
+} 

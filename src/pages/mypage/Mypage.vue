@@ -1,64 +1,6 @@
 <template>
   <div class="page-wrapper">
-    <Header />
     <div class="mypage-container">
-      <!-- 사이드바 -->
-      <aside class="sidebar">
-        <!-- 카테고리 목록 -->
-        <div class="categories">
-          <h5 class="sidebar-title">마이 페이지</h5>
-          <ul class="category-list">
-            <li class="category-item" :class="{ 'selected': activeMenu === 'applied' }">
-              <a href="#" @click.prevent="activeMenu = 'applied'">신청한 스터디</a>
-            </li>
-            <li class="category-item" :class="{ 'selected': activeMenu === 'created' }">
-              <a href="#" @click.prevent="activeMenu = 'created'">내가 만든 스터디</a>
-            </li>
-            <li class="category-item" :class="{ 'selected': activeMenu === 'profile' }">
-              <a href="#" @click.prevent="activeMenu = 'profile'">내 정보 수정</a>
-            </li>
-          </ul>
-        </div>
-
-        <!-- 사용자 메뉴 -->
-        <div class="user-menu">
-          <template v-if="!isLoggedIn">
-            <div class="user-profile">
-              <div class="user-actions no-border">
-                <router-link to="/login" class="menu-item">로그인</router-link>
-                <router-link to="/signup" class="menu-item signup">회원가입</router-link>
-              </div>
-            </div>
-          </template>
-        </div>
-
-        <!-- 사용자 프로필 -->
-        <div v-if="isLoggedIn" class="user-profile">
-          <div class="profile-badge">
-            <router-link to="/mypage?tab=profile" class="username-link">
-              <h3 class="username">{{ username }} 님</h3>
-            </router-link>
-          </div>
-          <div class="user-stats">
-            <router-link to="/mypage?tab=applied" class="stat-item">
-              <span class="stat-value">{{ appliedStudies.length }}</span>
-              <span class="stat-label">신청 스터디</span>
-            </router-link>
-            <router-link to="/mypage?tab=created" class="stat-item">
-              <span class="stat-value">{{ createdStudies.length }}</span>
-              <span class="stat-label">운영 스터디</span>
-            </router-link>
-          </div>
-          <div class="user-actions">
-            <button class="menu-item" @click="goBack">
-              <i class="fas fa-arrow-left"></i>
-              뒤로가기
-            </button>
-            <a href="#" @click.prevent="logout" class="menu-item logout">로그아웃</a>
-          </div>
-        </div>
-      </aside>
-
       <!-- 메인 콘텐츠 영역 -->
       <main class="main-content">
         <!-- 내 정보 수정 -->
@@ -198,7 +140,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import Header from '@/components/Header.vue'
 import logoImage from '@/assets/logo.png'
 
 const router = useRouter()
@@ -263,7 +204,19 @@ const updateProfile = () => {
 
 // 스터디 상세 페이지로 이동
 const goToStudyDetail = (studyId) => {
-  router.push(`/study/${studyId}`)
+  if (activeMenu.value === 'applied') {
+    router.push({
+      path: `/study/${studyId}`,
+      query: { tab: 'applied' }
+    })
+  } else if (activeMenu.value === 'created') {
+    router.push({
+      path: `/study/${studyId}`,
+      query: { tab: 'created' }
+    })
+  } else {
+    router.push(`/study/${studyId}`)
+  }
 }
 
 // 뒤로가기 함수
@@ -561,9 +514,9 @@ onMounted(() => {
 }
 
 .content-section {
-  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 1rem;
+  /* padding: 0 1rem; */
 }
 
 .content-header {
@@ -578,6 +531,7 @@ onMounted(() => {
   font-size: 1.5rem;
   font-weight: 600;
   margin: 0;
+  line-height: 1.5;
 }
 
 .study-tabs {
@@ -587,7 +541,7 @@ onMounted(() => {
 }
 
 .tab-btn {
-  padding: 0.5rem 1rem;
+  padding: 0.3rem 1rem;
   border: 1px solid #d4c4b7;
   background-color: transparent;
   color: #4b3621;
@@ -672,6 +626,67 @@ onMounted(() => {
   overflow-y: auto;
   padding-right: 1rem;
   overscroll-behavior: contain;
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .study-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 992px) {
+  .study-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .mypage-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #eee5dd;
+    padding: 1rem;
+  }
+
+  .main-content {
+    padding: 1rem;
+  }
+
+  .content-section {
+    padding: 0;
+  }
+
+  .study-tabs {
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-btn {
+    white-space: nowrap;
+  }
+
+  .user-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .stat-item {
+    padding: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 576px) {
+  .study-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .study-list::-webkit-scrollbar {
@@ -797,51 +812,5 @@ onMounted(() => {
 .study-status.거절 {
   background-color: #ffebee;
   color: #c62828;
-}
-
-@media (max-width: 768px) {
-  .mypage-container {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #eee5dd;
-    padding: 1rem;
-  }
-
-  .main-content {
-    padding: 1rem;
-  }
-
-  .content-section {
-    padding: 0;
-  }
-
-  .study-list {
-    grid-template-columns: 1fr;
-  }
-
-  .study-tabs {
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .tab-btn {
-    white-space: nowrap;
-  }
-
-  .user-stats {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .stat-item {
-    padding: 0.5rem;
-    background-color: rgba(255, 255, 255, 0.5);
-    border-radius: 8px;
-  }
 }
 </style>
