@@ -77,15 +77,15 @@
                 <div class="location-dropdowns">
                   <select v-model="selectedSido" @change="handleSidoChange" class="form-select" required>
                     <option value="">시/도 선택</option>
-                    <option v-for="sido in sidoList" :key="sido" :value="sido">{{ sido }}</option>
+                    <option v-for="sido in sidoList" :key="sido.id" :value="sido.id">{{ sido.name }}</option>
                   </select>
                   <select v-model="selectedSigungu" @change="handleSigunguChange" class="form-select" :disabled="!selectedSido" required>
                     <option value="">시/군/구 선택</option>
-                    <option v-for="sigungu in sigunguList" :key="sigungu" :value="sigungu">{{ sigungu }}</option>
+                    <option v-for="sigungu in sigunguList" :key="sigungu.id" :value="sigungu.id">{{ sigungu.name }}</option>
                   </select>
                   <select v-model="selectedDong" class="form-select" :disabled="!selectedSigungu" required>
                     <option value="">읍/면/동 선택</option>
-                    <option v-for="dong in dongList" :key="dong" :value="dong">{{ dong }}</option>
+                    <option v-for="dong in dongList" :key="dong.id" :value="dong.id">{{ dong.name }}</option>
                   </select>
                 </div>
               </span>
@@ -160,6 +160,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCreateStudy } from './scripts/useCreateStudy'
+import axios from 'axios'
 
 const router = useRouter()
 const { formData, handleSubmit, handleThumbnailChange, thumbnailPreview } = useCreateStudy()
@@ -171,20 +172,24 @@ formData.value = {
 }
 
 // 카테고리 데이터
-const categories = ref([
-  { id: 1, name: '프로그래밍' },
-  { id: 2, name: '디자인' },
-  { id: 3, name: '마케팅' },
-  { id: 4, name: '비즈니스' },
-  { id: 5, name: '언어' }
-])
+const categories = ref([])
+
+// 카테고리 데이터 가져오기
+const fetchCategories = async () => {
+  try {
+    const res = await axios.get('http://localhost:3000/category')
+    categories.value = res.data.data
+  } catch (error) {
+    console.error('카테고리 로딩 실패:', error)
+  }
+}
 
 // 지역 선택 관련 상태
 const selectedSido = ref('')
 const selectedSigungu = ref('')
 const selectedDong = ref('')
 const selectedLocation = ref('')
-const sidoList = ref(['서울특별시', '경기도', '인천광역시', '부산광역시', '대구광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시', '강원도', '충청북도', '충청남도', '전라북도', '전라남도', '경상북도', '경상남도', '제주특별자치도'])
+const sidoList = ref([])
 const sigunguList = ref([])
 const dongList = ref([])
 
@@ -197,63 +202,31 @@ const triggerFileInput = () => {
 
 // 시/도 목록 가져오기
 const fetchSidoList = async () => {
-  // API 호출 부분 주석 처리
-  /*
   try {
-    const response = await fetch('http://localhost:8080/api/locations/sido')
-    const data = await response.json()
-    sidoList.value = data
-  } catch (error) {
-    console.error('Error fetching sido list:', error)
+    const res = await axios.get('http://localhost:3000/city')
+    sidoList.value = res.data.data
+  } catch (e) {
+    console.error('시/도 목록 불러오기 실패', e)
   }
-  */
 }
 
 // 시/군/구 목록 가져오기
-const fetchSigunguList = async (sido) => {
-  // API 호출 부분 주석 처리
-  /*
+const fetchSigunguList = async (cityId) => {
   try {
-    const response = await fetch(`http://localhost:8080/api/locations/sigungu/${sido}`)
-    const data = await response.json()
-    sigunguList.value = data
-  } catch (error) {
-    console.error('Error fetching sigungu list:', error)
-  }
-  */
-  
-  // 임시 데이터
-  if (sido === '서울특별시') {
-    sigunguList.value = ['강남구', '강동구', '강북구', '강서구', '관악구', '광진구', '구로구', '금천구', '노원구', '도봉구', '동대문구', '동작구', '마포구', '서대문구', '서초구', '성동구', '성북구', '송파구', '양천구', '영등포구', '용산구', '은평구', '종로구', '중구', '중랑구']
-  } else if (sido === '경기도') {
-    sigunguList.value = ['수원시', '성남시', '의정부시', '안양시', '부천시', '광명시', '평택시', '동두천시', '안산시', '고양시', '과천시', '구리시', '남양주시', '오산시', '시흥시', '군포시', '의왕시', '하남시', '용인시', '파주시', '이천시', '안성시', '김포시', '화성시', '광주시', '양주시', '포천시', '여주시', '연천군', '가평군', '양평군']
-  } else {
-    sigunguList.value = []
+    const res = await axios.get(`http://localhost:3000/district/${cityId}`)
+    sigunguList.value = res.data.data
+  } catch (e) {
+    console.error('시/군/구 목록 불러오기 실패', e)
   }
 }
 
 // 읍/면/동 목록 가져오기
-const fetchDongList = async (sido, sigungu) => {
-  // API 호출 부분 주석 처리
-  /*
+const fetchDongList = async (districtId) => {
   try {
-    const response = await fetch(`http://localhost:8080/api/locations/dong/${sido}/${sigungu}`)
-    const data = await response.json()
-    dongList.value = data
-  } catch (error) {
-    console.error('Error fetching dong list:', error)
-  }
-  */
-  
-  // 임시 데이터
-  if (sido === '서울특별시' && sigungu === '강남구') {
-    dongList.value = ['개포동', '논현동', '대치동', '도곡동', '삼성동', '세곡동', '신사동', '압구정동', '역삼동', '일원동', '청담동']
-  } else if (sido === '서울특별시' && sigungu === '서초구') {
-    dongList.value = ['반포동', '방배동', '서초동', '양재동', '우면동', '잠원동']
-  } else if (sido === '경기도' && sigungu === '수원시') {
-    dongList.value = ['권선구', '영통구', '장안구', '팔달구']
-  } else {
-    dongList.value = []
+    const res = await axios.get(`http://localhost:3000/town/${districtId}`)
+    dongList.value = res.data.data
+  } catch (e) {
+    console.error('읍/면/동 목록 불러오기 실패', e)
   }
 }
 
@@ -277,13 +250,16 @@ const handleSigunguChange = async () => {
   dongList.value = []
   
   if (selectedSigungu.value) {
-    await fetchDongList(selectedSido.value, selectedSigungu.value)
+    await fetchDongList(selectedSigungu.value)
   }
 }
 
-// 컴포넌트 마운트 시 시/도 목록 가져오기
+// 컴포넌트 마운트 시 시/도 목록과 카테고리 목록 가져오기
 onMounted(async () => {
-  await fetchSidoList()
+  await Promise.all([
+    fetchSidoList(),
+    fetchCategories()
+  ])
 })
 
 // 폼 제출 시 지역 정보 추가
